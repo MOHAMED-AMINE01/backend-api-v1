@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitoring-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: monitoring-service
+  template:
+    metadata:
+      labels:
+        app: monitoring-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8002"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: monitoring-service
+        image: monitoring-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8002
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monitoring-service
+spec:
+  selector:
+    app: monitoring-service
+  ports:
+  - protocol: TCP
+    port: 8002
+    targetPort: 8002
+    nodePort: 30082
+  type: NodePort

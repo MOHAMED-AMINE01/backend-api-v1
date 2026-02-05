@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+motor
+python-socketio
+aio-pika
+python-dotenv
+asyncio
+requests
+pydantic
+prometheus-fastapi-instrumentator
+pydantic-settings
+paho-mqtt

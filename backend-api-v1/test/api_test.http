@@ -1,0 +1,48 @@
+@BASE_URL = http://172.26.80.134:30080/users
+
+### 1. Register a new user
+# Password will be hashed in the database (Argon2)
+
+POST {{BASE_URL}}/add
+Content-Type: application/json
+
+{
+    "email": "user_test3@app.com",
+    "password": "password12344"
+}
+
+### 2. Authenticate (Login)
+# @name login
+POST {{BASE_URL}}/auth
+Content-Type: application/json
+
+{
+    "email": "user_test3@app.com",
+    "password": "password12344"
+}
+
+### 3. Capture the token from the login response
+# Copy the token from step 2 and paste it here
+@TOKEN = {{login.response.body.token}}
+
+### 4. Access protected route (Get all users)
+GET {{BASE_URL}}
+Authorization: bearer {{TOKEN}}
+
+### 5. Logout (Blacklist the token in Redis)
+# This will set a TTL in Redis based on the token's remaining life
+POST {{BASE_URL}}/logout
+Authorization: bearer {{TOKEN}}
+
+### 6. Try to access protected route again with blacklisted token
+# Expected: 401 Unauthorized with message "Token is blacklisted"
+GET {{BASE_URL}}
+Authorization: bearer {{TOKEN}}
+
+### 7. Optional: Verify token endpoint
+POST {{BASE_URL}}/verify-token
+Content-Type: application/json
+
+{
+    "token": "{{TOKEN}}"
+}

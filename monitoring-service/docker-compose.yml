@@ -1,0 +1,44 @@
+services:
+  monitoring_backend:
+    build: .
+    container_name: monitoring-ms
+    environment:
+      - MONGO_URL=mongodb://admin:1234@mongodb:27017
+      - MONGO_DB=iot_monitoring
+      - MQTT_HOST=rabbitmq_broker
+      - MQTT_PORT=1883
+      - PYTHONUNBUFFERED=1
+      - AUTH_SERVICE_URL=http://auth-ms:8000
+    ports:
+      - 8002:8002
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - iot-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_monitoring
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=1234
+    ports:
+      - 2717:27017
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mongo_data:/data/db
+
+networks:
+  iot-network:
+    external: true
+    name: iot-network
+
+volumes:
+  mongo_data:

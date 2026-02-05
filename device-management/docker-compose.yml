@@ -1,0 +1,62 @@
+services:
+  device_backend:
+    build: .
+    container_name: device-ms
+    environment:
+      - SERVER_DB=db
+      - NAME_DB=db_devices
+      - RABBIT_HOST=rabbitmq
+      - MQTT_HOST=rabbitmq
+      - MQTT_PORT=1883
+      - AUTH_SERVICE_URL=http://auth-ms:8000
+      - PYTHONUNBUFFERED=1
+    ports:
+      - 8001:8001
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - iot-network
+  db:
+    image: postgres:alpine
+    container_name: postgresql_devices
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=1234
+    ports:
+      - 5433:5432
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d db_devices"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_broker
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 1883:1883
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  iot-network:
+    external: true
+    name: iot-network
+
+volumes:
+  db_data:

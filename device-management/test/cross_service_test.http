@@ -1,0 +1,136 @@
+@AUTH_URL = http://172.26.80.134:30080/users
+@DEVICE_URL = http://172.26.80.134:30081/devices
+
+# ==========================================
+# SECTION 1: NORMAL USER FLOW
+# ==========================================
+
+### 1. Register a new user
+POST {{AUTH_URL}}/add
+Content-Type: application/json
+
+{
+    "email": "user_normall@app.com",
+    "password": "password123"
+}
+
+### 2. Login as Normal User
+# @name login_user
+POST {{AUTH_URL}}/auth
+Content-Type: application/json
+
+{
+    "email": "user_normall@app.com",
+    "password": "password123"
+}
+
+### 3. Capture User Token
+@USER_TOKEN = {{login_user.response.body.token}}
+
+### 4. User adds a device
+# @name create_device
+POST {{DEVICE_URL}}/add
+Authorization: bearer {{USER_TOKEN}}
+Content-Type: application/json
+
+{
+    "name": "tablette",
+    "category": "end_device",
+    "type": "workstation",
+    "status": "online",
+    "configuration": {"os": "Android"}
+}
+
+### 4.1. User adds an IoT Sensor
+POST {{DEVICE_URL}}/add
+Authorization: bearer {{USER_TOKEN}}
+Content-Type: application/json
+
+{
+    "name": "temp_sensor_01",
+    "category": "iot_device",
+    "type": "temperature",
+    "status": "online"
+}
+
+### 4.2. User adds an IoT Gateway
+POST {{DEVICE_URL}}/add
+Authorization: bearer {{USER_TOKEN}}
+Content-Type: application/json
+
+{
+    "name": "gateway_factory_01",
+    "category": "iot_device",
+    "type": "other",
+    "status": "online"
+}
+
+### 5. Capture Device ID
+@DEVICE_ID = {{create_device.response.body.id}}
+
+# ==========================================
+# SECTION 2: ADMIN USER FLOW 
+# (Note: Set is_admin=true in DB for this user to test)
+# ==========================================
+
+### 6. Register an Admin user
+POST {{AUTH_URL}}/add
+Content-Type: application/json
+
+{
+    "email": "admin1@app.com",
+    "password": "admin1_password"
+}
+
+# NOTE: After registration, promote this user to admin manually:
+# microk8s kubectl exec -it $(microk8s kubectl get pods -l app=postgres-auth -o jsonpath='{.items[0].metadata.name}') -- psql -U admin -d db_auth -c "UPDATE t_users SET is_admin = true WHERE email = 'admin1@app.com';"
+
+
+### 7. Login as Admin
+# @name login_admin
+POST {{AUTH_URL}}/auth
+Content-Type: application/json
+
+{
+    "email": "admin1@app.com",
+    "password": "admin1_password"
+}
+
+### 8. Capture Admin Token
+@ADMIN_TOKEN = {{login_admin.response.body.token}}
+
+### 9. Admin: List ALL devices in the system
+GET {{DEVICE_URL}}/admin/all
+Authorization: bearer {{ADMIN_TOKEN}}
+
+### 10. Admin: Update any user's device
+PUT {{DEVICE_URL}}/{{DEVICE_ID}}/status?status=maintenance
+Authorization: bearer {{ADMIN_TOKEN}}
+
+# ==========================================
+# SECTION 3: PERMISSION & SECURITY TESTS
+# ==========================================
+
+### 11. Normal User: Try to access Admin endpoint
+GET {{DEVICE_URL}}/admin/all
+Authorization: bearer {{USER_TOKEN}}
+
+### 12. Normal User: List ONLY own devices
+GET {{DEVICE_URL}}/my-devices
+Authorization: bearer {{USER_TOKEN}}
+
+### 13. Filter by date (Normal User)
+GET {{DEVICE_URL}}/filter/by-date?start=2024-01-01T00:00:00&end=2026-12-31T23:59:59
+Authorization: bearer {{USER_TOKEN}}
+
+### 14. Cleanup: Admin deletes user's device
+DELETE {{DEVICE_URL}}/{{DEVICE_ID}}
+Authorization: bearer {{ADMIN_TOKEN}}
+
+### 15. Logout & Blacklist check
+POST {{AUTH_URL}}/logout
+Authorization: bearer {{USER_TOKEN}}
+
+### 16. Verify Token Invalidation
+GET {{DEVICE_URL}}/my-devices
+Authorization: bearer {{USER_TOKEN}}

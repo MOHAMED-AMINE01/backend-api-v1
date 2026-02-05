@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # Databases
+  POSTGRES_USER: "admin"
+  POSTGRES_DB_AUTH: "db_auth"
+  POSTGRES_DB_DEVICES: "db_devices"
+  POSTGRES_HOST: "postgres-auth"
+  
+  REDIS_HOST: "redis-auth"
+  REDIS_PORT: "6379"
+
+  MONGO_HOST: "mongo-monitoring"
+  MONGO_PORT: "27017"
+  MONGO_DB_NAME: "iot_monitoring"
+
+  # Messaging
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  MQTT_HOST: "rabbitmq"
+  MQTT_PORT: "1883"
+
+  # Service URLs
+  AUTH_SERVICE_URL: "http://auth-service:8000"
+  DEVICE_SERVICE_URL: "http://device-service:8001"
+  MONITORING_SERVICE_URL: "http://monitoring-service:8002"
+
+  # Misc
+  JWT_ALGORITHM: "HS256"
+  EXPIRE_TIME: "3600"
+  PYTHONUNBUFFERED: "1"

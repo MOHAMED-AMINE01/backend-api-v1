@@ -1,0 +1,119 @@
+### ========================================
+### KUBERNETES IOT CLOUD - VRAIES ROUTES
+### IP de la VM Multipass: 172.26.87.85
+### ========================================
+
+@baseUrl = http://172.26.87.85
+
+### ==========================================
+### AUTH SERVICE (port 30080) - prefix: /users
+### ==========================================
+
+### 1. Inscription utilisateur
+POST {{baseUrl}}:30080/users/add
+Content-Type: application/json
+
+{
+    "email": "testuser@gmail.com",
+    "password": "securepassword123"
+}
+
+### 2. Connexion (Login)
+# @name login
+POST {{baseUrl}}:30080/users/auth
+Content-Type: application/json
+
+{
+    "email": "testuser@gmail.com",
+    "password": "securepassword123"
+}
+
+### 3. Stocker le token
+@authToken = {{login.response.body.token}}
+
+### 4. Lister tous les utilisateurs (Authentifié)
+GET {{baseUrl}}:30080/users/
+Authorization: Bearer {{authToken}}
+
+### 5. Vérifier le token
+POST {{baseUrl}}:30080/users/verify-token
+Content-Type: application/json
+
+{
+    "token": "{{authToken}}"
+}
+
+### 6. Logout
+POST {{baseUrl}}:30080/users/logout
+Authorization: Bearer {{authToken}}
+
+### ==========================================
+### DEVICE SERVICE (port 30081) - prefix: /devices
+### ==========================================
+
+### 7. Créer un Device
+POST {{baseUrl}}:30081/devices/add
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Capteur Temperature K8s",
+    "type": "temperature",
+    "category": "iot_device",
+    "location": "Salle Serveur"
+}
+
+### 8. Lister MES Devices
+GET {{baseUrl}}:30081/devices/my-devices
+Authorization: Bearer {{authToken}}
+
+### 9. Lister TOUS les Devices (Admin seulement)
+GET {{baseUrl}}:30081/devices/admin/all
+Authorization: Bearer {{authToken}}
+
+### 10. Obtenir un Device par ID
+GET {{baseUrl}}:30081/devices/2
+Authorization: Bearer {{authToken}}
+
+### 11. Modifier un Device
+PUT {{baseUrl}}:30081/devices/2
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Capteur Temperature MODIFIE"
+}
+
+### 12. Changer le statut d'un Device
+PUT {{baseUrl}}:30081/devices/2/status?status=online
+Authorization: Bearer {{authToken}}
+
+### 13. Supprimer un Device
+DELETE {{baseUrl}}:30081/devices/2
+Authorization: Bearer {{authToken}}
+
+### 14. Filtrer par date
+GET {{baseUrl}}:30081/devices/filter/by-date?start=2024-01-01&end=2026-12-31
+Authorization: Bearer {{authToken}}
+
+### ==========================================
+### MONITORING SERVICE (port 30082) - prefix: /monitoring
+### ==========================================
+
+### 15. Status du service
+GET {{baseUrl}}:30082/
+
+### 16. Historique d'un Device
+GET {{baseUrl}}:30082/monitoring/history/2?limit=50
+Authorization: Bearer {{authToken}}
+
+### 17. Mes métriques utilisateur
+GET {{baseUrl}}:30082/monitoring/user/metrics?limit=50
+Authorization: Bearer {{authToken}}
+
+### 18. Filtrer métriques par date
+GET {{baseUrl}}:30082/monitoring/filter/2?start=2024-01-01&end=2026-12-31
+Authorization: Bearer {{authToken}}
+
+### 19. Metrics Prometheus
+GET {{baseUrl}}:30081/metrics

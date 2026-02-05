@@ -1,0 +1,7 @@
+{
+  "name": "K8s Industrial IoT Monitor",
+  "description": "A high-end industrial dashboard for monitoring IoT devices on a MicroK8s cluster, featuring real-time metrics, RBAC, and cluster health monitoring.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

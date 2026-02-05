@@ -1,0 +1,40 @@
+@MONITOR_URL = http://172.26.80.134:30082/monitoring
+@AUTH_URL = http://172.26.80.134:30080/users
+@DEVICE_ID = 2
+
+### 1. Login to get Token for Monitoring
+# @name login
+POST {{AUTH_URL}}/auth
+Content-Type: application/json
+
+{
+    "email": "user_normall@app.com",
+    "password": "password123"
+}
+
+### 2. Capture Token
+@TOKEN = {{login.response.body.token}}
+
+### 3. Root check (Public)
+GET http://172.26.80.134:30082/
+Accept: application/json
+
+### 4. Get Device History from MongoDB (Protected)
+GET {{MONITOR_URL}}/history/{{DEVICE_ID}}?limit=10
+Authorization: bearer {{TOKEN}}
+Accept: application/json
+
+### 5. Get All My Metrics (New endpoint)
+# Returns the latest metrics for all devices I own
+GET {{MONITOR_URL}}/user/metrics?limit=20
+Authorization: bearer {{TOKEN}}
+Accept: application/json
+
+### 6. Filter Metrics by Date (Protected)
+GET {{MONITOR_URL}}/filter/{{DEVICE_ID}}?start=2024-01-01T00:00:00&end=2026-12-31T23:59:59
+Authorization: bearer {{TOKEN}}
+Accept: application/json
+
+### 6. Test Unauthorized access (Should Fail 401)
+GET {{MONITOR_URL}}/history/{{DEVICE_ID}}
+Accept: application/json
